@@ -1,9 +1,11 @@
 'use strict';
-
+require('dotenv').config({path: __dirname + '/.env'});
 var express     = require('express');
 var bodyParser  = require('body-parser');
 var expect      = require('chai').expect;
 var cors        = require('cors');
+var helmet      = require('helmet');
+var fetch = require('node-fetch');
 
 var apiRoutes         = require('./routes/api.js');
 var fccTestingRoutes  = require('./routes/fcctesting.js');
@@ -11,7 +13,16 @@ var runner            = require('./test-runner');
 
 var app = express();
 
-app.use('/public', express.static(process.cwd() + '/public'));
+app.use(helmet());
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'", "https://code.jquery.com", "'unsafe-inline'"],
+    styleSrc: ["'self'", "'unsafe-inline'"]
+  }
+}));
+
+app.use('/public', express.static(__dirname + '/public'));
 
 app.use(cors({origin: '*'})); //For FCC testing purposes only
 
@@ -21,7 +32,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 //Index page (static HTML)
 app.route('/')
   .get(function (req, res) {
-    res.sendFile(process.cwd() + '/views/index.html');
+    res.sendFile(__dirname + '/views/index.html');
   });
 
 //For FCC testing purposes

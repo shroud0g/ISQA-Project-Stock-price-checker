@@ -14,7 +14,7 @@ var server = require('../server');
 chai.use(chaiHttp);
 
 suite('Functional Tests', function() {
-    
+    this.timeout(7000);
     suite('GET /api/stock-prices => stockData object', function() {
       
       test('1 stock', function(done) {
@@ -22,27 +22,63 @@ suite('Functional Tests', function() {
         .get('/api/stock-prices')
         .query({stock: 'goog'})
         .end(function(err, res){
-          
-          //complete this one too
-          
+          assert.equal(res.status, 200);
+          assert.equal(res.body.stockData.stock, 'goog');
+          assert.exists(res.body.stockData.value);          
           done();
         });
       });
       
       test('1 stock with like', function(done) {
-        
+        chai.request(server)
+          .get('/api/stock-prices')
+          .query({stock: 'adi', like: true})
+          .end((err, res) => {
+            assert.equal(res.status, 200);
+            assert.equal(res.body.stockData.stock, 'adi');
+            assert.exists(res.body.stockData.value);
+            assert.isAbove(res.body.stockData.likes, 0);
+            done();    
+          })
       });
       
       test('1 stock with like again (ensure likes arent double counted)', function(done) {
-        
+        chai.request(server)
+          .get('/api/stock-prices')
+          .query({stock: 'adi', like: true})
+          .end((err, res) => {
+            assert.equal(res.status, 200);
+            assert.equal(res.body.stockData.stock, 'adi');
+            assert.exists(res.body.stockData.value);
+            assert.equal(res.body.stockData.likes, 1);
+            done();    
+          })
       });
       
       test('2 stocks', function(done) {
-        
+        chai.request(server)
+          .get('/api/stock-prices')
+          .query({stock: ['goog','msft']})
+          .end((err, res) => {
+            assert.equal(res.status, 200);
+            assert.equal(res.body.stockData[0].stock, 'goog');
+            assert.equal(res.body.stockData[1].stock, 'msft');
+            done();    
+          })
       });
       
       test('2 stocks with like', function(done) {
-        
+        chai.request(server)
+          .get('/api/stock-prices')
+          .query({stock: ['goog','msft'], like: true})
+          .end((err, res) => {
+            assert.equal(res.status, 200);
+            assert.equal(res.body.stockData[0].stock, 'goog');
+            assert.equal(res.body.stockData[1].stock, 'msft');
+            assert.isAbove(res.body.stockData[0].likes, 0);
+            assert.isAbove(res.body.stockData[1].likes, 0);
+            done();    
+          })
       });
       
     });
